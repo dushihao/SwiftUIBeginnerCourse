@@ -42,32 +42,72 @@ extension User: Decodable {
         case friends
     }
     
-    enum FirendIDContainerCodingKey: CodingKey {
-        case id
-    }
-    
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id       = try container.decode(Int.self, forKey: .id)
+        self.id       = try container[.id]
         
-        let lastName  = try container.decode(String.self, forKey: .lastName)
-        let firstName = try container.decode(String.self, forKey: .firstName)
+        let lastName: String  = try container[.lastName]
+        let firstName: String = try container[.firstName]
         self.name = "\(firstName) \(lastName)"
         
         var friendContainer = try container.nestedUnkeyedContainer(forKey: .friends)
         
-        var ids = [Int]()
-        while !friendContainer.isAtEnd {
-            let friendIDContainer = try friendContainer.nestedContainer(keyedBy: FirendIDContainerCodingKey.self)
-            ids.append(try friendIDContainer.decode(Int.self, forKey: .id))
+        self.friendID = try friendContainer.map {
+//            let friendIDContainer = try friendContainer.nestedContainer(keyedBy: FirendIDContainerCodingKey.self)
+//            ids.append(try friendIDContainer.decode(Int.self, forKey: .id))
+            try $0.container()["id"]
         }
-        
-        self.friendID = ids
     }
 }
 
 struct Response: Decodable {
     let response: User
+}
+
+struct DecodingKey: CodingKey {
+    var stringValue: String
+    
+    init?(stringValue: String) {
+        self.stringValue = stringValue
+    }
+    
+    var intValue: Int?
+    
+    init?(intValue: Int) {
+        return nil
+    }
+}
+
+extension DecodingKey: ExpressibleByStringLiteral {
+    init(stringLiteral value: StringLiteralType) {
+        self.stringValue = value
+    }
+}
+
+extension KeyedDecodingContainerProtocol {
+    // subscript 属性中在get处抛出错误
+    subscript<T: Decodable>(_ key: Key) -> T {
+        get throws {
+            try self.decode(T.self, forKey: key)
+        }
+    }
+}
+
+extension UnkeyedDecodingContainer {
+    mutating func map<T>(_ transform: (Decoder) throws -> T ) throws -> [T] {
+        var items = [T]()
+        while !self.isAtEnd {
+            let item = try transform(superDecoder())
+            items.append(item)
+        }
+        return items
+    }
+}
+
+extension Decoder {
+    func container() throws -> KeyedDecodingContainer<DecodingKey> {
+        try self.container(keyedBy: DecodingKey.self)
+    }
 }
 
 let user = (try! JSONDecoder().decode(Response.self, from: jsonData)).response

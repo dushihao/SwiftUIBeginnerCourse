@@ -19,17 +19,20 @@ struct User: Codable {
     var firstName: String
     var lastName: String
     
-    enum CodingKeys: String, CodingKey {
-        case firstName = "first_name"
-        case lastName = "last_name"
-    }
+//    enum CodingKeys: String, CodingKey {
+//        case firstName = "first_name"
+//        case lastName = "last_name"
+//    }
 }
 
-
-let user = try! JSONDecoder().decode(User.self, from: jsonData)
+let decoder = JSONDecoder()
+decoder.keyDecodingStrategy = .convertFromSnakeCase
+let user = try! decoder.decode(User.self, from: jsonData)
 print(user)
 
-let data = try! JSONEncoder().encode(user)
+let encoder = JSONEncoder()
+encoder.keyEncodingStrategy = .convertToSnakeCase
+let data = try! encoder.encode(user)
 let string = String(data: data, encoding: .utf8)!
 print(string)
 

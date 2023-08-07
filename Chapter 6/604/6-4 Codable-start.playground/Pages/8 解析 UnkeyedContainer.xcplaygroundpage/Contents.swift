@@ -40,7 +40,11 @@ extension User: Decodable {
         case id
         case firstName
         case lastName
-        
+        case friends
+    }
+    
+    enum FriendIDContainerCodingKeys: CodingKey {
+        case id
     }
     
     init(from decoder: Decoder) throws {
@@ -51,8 +55,21 @@ extension User: Decodable {
         let firstName = try container.decode(String.self, forKey: .firstName)
         self.name = "\(firstName) \(lastName)"
         
+        // method 1
+//        self.friendID = (try container.decode([FriendId].self, forKey: .friends)).map(\.id)
+        var friendContainer = try container.nestedUnkeyedContainer(forKey: .friends)
+        var ids = [Int]()
+        while !friendContainer.isAtEnd {
+            let friendIDContaner = try friendContainer.nestedContainer(keyedBy: FriendIDContainerCodingKeys.self)
+            ids.append(try friendIDContaner.decode(Int.self, forKey: .id))
+        }
+        self.friendID = ids
     }
 }
+
+//struct FriendId: Decodable {
+//    var id: Int
+//}
 
 struct Response: Decodable {
     let response: User

@@ -15,7 +15,7 @@ struct NetworkManagerPracticeApp: App {
     
     var body: some Scene {
         WindowGroup {
-            HomeScreen()
+            HomeScreen(apiManager: .shared)
         }
     }
 }

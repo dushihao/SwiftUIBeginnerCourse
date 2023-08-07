@@ -15,7 +15,10 @@ struct User {
 }
 
 extension User: Codable {
-    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name = "firstName"
+    }
 }
 
 let user = try! JSONDecoder().decode(User.self, from: jsonData)
